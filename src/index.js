@@ -9,7 +9,7 @@ function Population(size) {
   return population;
 }
 
-//Função de criação da população inicial, recebendo o tamanho da população e retornando um array de objetos;
+//Função de aptidão, recebendo um array de objetos e retornando um array de objetos com a aptidão calculada;
 function Fitness(population) {
   population.forEach(element => {
     element.aptidao = Math.sqrt((element.X ** 3) + (2 * element.Y ** 4));
@@ -48,8 +48,9 @@ function CrossOver(bests) {
 function Mutation(population) {
   population.forEach(element => {
     if (Math.random() < 0.1) {
-      element.X = Math.floor(Math.random() * 8);
-      element.Y = Math.floor(Math.random() * 8);
+      element.X = element.X & Math.floor(Math.random() * 8);
+      element.Y = element.Y & Math.floor(Math.random() * 8);
+      element.aptidao = Math.sqrt((element.X ** 3) + (2 * element.Y ** 4));
     }
   });
 
@@ -58,7 +59,7 @@ function Mutation(population) {
 
 //Função de criação da nova população, recebendo um array de objetos e retornando um array com a nova população;
 function NewGeneration(population) {
-  let bests = Bests(SortPopulation(Fitness(population)));
+  let bests = Bests(SortPopulation(population));
   let newPopulation = CrossOver(bests);
   return Mutation(newPopulation);
 }
@@ -66,15 +67,19 @@ function NewGeneration(population) {
 
 //Função de avaliação da população, recebendo um array de objetos e retornando um objeto com o melhor indivíduo;
 function Valuate(population) {
-  return SortPopulation(Fitness(population))[0];
+  return SortPopulation(population)[0];
 }
 
-const population = Population(100);
-
-let newGeneration = NewGeneration(population);
-
+//Criação da população inicial;
+const population = Fitness(Population(100));
 console.log("População Inicial:", population);
-console.log("Melhor Indivíduo:", Valuate(population));
+//Avaliação da população inicial;
+const best = Valuate(population);
+console.log("Melhor Indivíduo:", best);
 
+//Criação da nova população;
+const newGeneration = Fitness(NewGeneration(population));
 console.log("Nova geração: ", newGeneration);
-console.log("Melhor Indivíduo", Valuate(newGeneration));
+//Avaliação da nova população;
+const newBest = Valuate(newGeneration);
+console.log("Melhor Indivíduo", newBest);
