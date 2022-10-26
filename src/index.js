@@ -18,27 +18,41 @@ function Fitness(population) {
   return population;
 }
 
-
 //Função de ordenação da população, recebendo um array de objetos e retornando um array de objetos ordenado;
 function SortPopulation(population) {
   return population.sort((a, b) => a.aptidao - b.aptidao);
 }
 
-//Função de seleção dos melhores, recebendo um array de objetos e retornando um array de objetos com os melhores;
-function Bests(population) {
-  return population.slice(0, 10);
+function AptAcumulada(population) {
+  let ordenedPopulation = SortPopulation(population);
+  let acumulada = 0;
+  ordenedPopulation.forEach(element => {
+    acumulada += element.aptidao;
+    element.AptAcumulada = acumulada;
+  });
+
+  return population;
+}
+
+//Função de seleção dos melhores, recebendo um array de objetos e retornando um array de objetos com os selecionados;
+function Selected(population) {
+  let acumulada = population[population.length - 1].AptAcumulada;
+  let selected = [];
+
+  for (let i = 0; i < 4; i++) {
+    let random = Math.random() * acumulada;
+    selected.push(population.find(element => element.AptAcumulada > random));
+  }
+
+  return selected;
 }
 
 //Função de cruzamento, recebendo um array de objetos e retornando um array de objetos cruzados;
 function CrossOver(bests) {
   let newPopulation = [];
 
-  for (let i = 0; i < bests.length; i++) {
-    for (let j = 0; j < bests.length; j++) {
-      if (i !== j) {
-        newPopulation.push({ X: bests[i].X, Y: bests[j].Y });
-      }
-    }
+  for (let i = 0, j = 1; j < bests.length; i += 2, j += 2) {
+    newPopulation.push({ X: bests[i].X, Y: bests[j].Y });
   }
 
   return newPopulation;
@@ -59,9 +73,13 @@ function Mutation(population) {
 
 //Função de criação da nova população, recebendo um array de objetos e retornando um array com a nova população;
 function NewGeneration(population) {
-  let bests = Bests(SortPopulation(population));
-  let newPopulation = CrossOver(bests);
-  return Mutation(newPopulation);
+  let selected = Selected(AptAcumulada((population)));
+  let newPopulation = CrossOver(selected);
+  let mutation = Mutation(newPopulation);
+
+  population[population.length - 2] = mutation[0];
+  population[population.length - 1] = mutation[1];
+  return population;
 }
 
 
@@ -71,15 +89,25 @@ function Valuate(population) {
 }
 
 //Criação da população inicial;
-const population = Fitness(Population(100));
-console.log("População Inicial:", population);
+const population = AptAcumulada(Fitness(Population(10)));
+console.log("População Inicial:",);
+console.table(population);
 //Avaliação da população inicial;
 const best = Valuate(population);
 console.log("Melhor Indivíduo:", best);
 
 //Criação da nova população;
-const newGeneration = Fitness(NewGeneration(population));
-console.log("Nova geração: ", newGeneration);
-//Avaliação da nova população;
-const newBest = Valuate(newGeneration);
-console.log("Melhor Indivíduo", newBest);
+
+for (let index = 0; index < 4; index++) {
+  let newGeneration = AptAcumulada(Fitness(NewGeneration(population)));
+  console.log("Geração:", index + 1);
+  console.table(newGeneration);
+  //Avaliação da nova população;
+  let newBest = Valuate(newGeneration);
+  console.log("Melhor Indivíduo", newBest);
+  if (newBest.X === 0 && newBest.Y === 0) {
+    console.log("Solução encontrada!");
+    break;
+  }
+}
+
